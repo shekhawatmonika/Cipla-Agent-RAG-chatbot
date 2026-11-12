@@ -14,13 +14,13 @@ No Hallucination. Every answer comes with **Sources + Similarity Score**.
 
 🤖 Agentic AI - Multi-Agent System
 
-Ye sirf ek chatbot nahi hai, ye **Agentic RAG** hai. Isme 3 Agents ek ke baad ek kaam karte hai:
+This is not a chatbot, This is **Agentic RAG** . In this 3 Agent will work together:
 
 | Agent | Kaam | Function |
 | :--- | :--- | :--- |
-| **1. Planner Agent** | User ke question ko samajh ke saaf / rewrite karta hai | `rewrite_query()` |
-| **2. Retriever Agent** | TF-IDF + Cosine Similarity se sabse best pages dhundhta hai | `retrieve_documents()` |
-| **3. Critic Agent** | Irrelevant / gande sentences ko reject karke sirf sahi sentences rakhta hai | `select_relevant_sentences()` |
+| **1. Planner Agent** | Understand user Questions / rewrite answers | `rewrite_query()` |
+| **2. Retriever Agent** | TF-IDF + use Cosine Similarity for beat answer | `retrieve_documents()` |
+| **3. Critic Agent** | Irrelevant / remove irrelevent sentences| `select_relevant_sentences()` |
 
 User Question
     ↓
@@ -32,18 +32,18 @@ User Question
     ↓
 [Answer Agent] -> Final Bulleted Answer
 
-> Ye single-step RAG nahi hai, ye **Multi-Agent Pipeline** hai. Har Agent ka alag kaam hai, aur final answer teeno ke decision se banta hai.
+>This is not single step Rag, This is **Multi-Agent Pipeline** .
 
 ---
 
 ✨ Features
 
 - **Patient / Doctor Mode** - Doctor ko 8 sentences, Patient ko 5 simple sentences
-- **Suggested Questions** - Demo me type karne ki zaroorat nahi
-- **View Sources** - Har answer ke neeche Cipla ka official link
-- **Search Details** - Similarity score dikhta hai, teacher ko proof milta hai
+- **Suggested Questions** - Not need to type demo questions
+- **View Sources** - Below every answer Cipla  official link
+- **Search Details** - Show similarity score for proof
 - **Dual Interface** - Streamlit UI + FastAPI Backend
-- **Docker Ready** - Ek command me kahi bhi chalega
+- **Docker Ready** - Will not run in one command
 
 📁 Project Structure
 
