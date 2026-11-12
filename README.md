@@ -49,17 +49,26 @@ User Question
 
 CIPLA RAG CHATBOT/
 ├── http://app.py              # Main Streamlit App + RAG Pipeline (3 Agents)
+
 ├── http://api.py              # FastAPI Backend
+
 ├── scraper_js.py       # Cipla website se data scrape karta hai
+
 ├── clean_cipla.py      # Scraped data ko clean karta hai
+
 ├── data/
 │   ├── cipla_clean.json      # Cleaned data (Final)
 │   └── cipla_full_site.json   # Raw scraped data
+
 ├── Dockerfile
+
 ├── http://docker-compose.yml
+
 ├── http://requirements.txt
+
 ├── .gitignore
 └── http://README.md
+
 
 🚀 Run Locally
 
