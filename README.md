@@ -82,7 +82,7 @@ Open: `http://localhost:8501`
 uvicorn api:app --reload
 Open Swagger Docs: `http://127.0.0.1:8000/docs`
 
-3. Docker (Sab kuch ek saath)
+3. Docker (All in one)
 docker-compose up --build
 - Streamlit: `http://localhost:8501`
 - API: `http://localhost:8000/docs`
