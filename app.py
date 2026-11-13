@@ -385,34 +385,137 @@ def split_sentences(text):
 
 
 # =====================================================
-# 10. ANSWER GENERATOR
+# 10. CLEAN ANSWER GENERATOR
 # =====================================================
 
-def generate_answer(
-    query,
-    results,
-    vectorizer,
-    role
-):
+def is_company_overview_question(query):
+
+    q = query.lower().strip()
+
+    patterns = [
+        r"what is cipla",
+        r"tell me about cipla",
+        r"about cipla",
+        r"introduce cipla",
+        r"cipla company overview"
+    ]
+
+    return any(re.search(p, q) for p in patterns)
+
+
+def is_noisy_sentence(sentence):
+
+    text = sentence.lower().strip()
+
+    unwanted = [
+        "our history",
+        "about us",
+        "contact information",
+        "terms and conditions",
+        "privacy policy",
+        "product portfolio",
+        "search search",
+        "internal communication memo",
+        "source: cipla annual report",
+        "this website is intended",
+        "visitors book",
+        "manage preferences",
+        "explore the archive",
+        "skip to main content"
+    ]
+
+    if any(word in text for word in unwanted):
+        return True
+
+    # Reject very short fragments
+    if len(sentence.split()) < 8:
+        return True
+
+    # Reject excessive separators
+    if sentence.count("|") > 1:
+        return True
+
+    if sentence.count(",") > 7:
+        return True
+
+    # Reject sentences dominated by numbers
+    words = sentence.split()
+
+    if len(words) > 0:
+        number_words = sum(
+            1 for word in words
+            if re.search(r"\d", word)
+        )
+
+        if number_words / len(words) > 0.35:
+            return True
+
+    return False
+
+
+def generate_answer(query, results, vectorizer, role):
 
     if not results:
-
         return (
             "I could not find relevant information "
-            "in the Cipla dataset. Please try "
-            "rephrasing your question."
+            "in the Cipla dataset. Please try another question."
         ), []
+
+    # -----------------------------------------
+    # SPECIAL HANDLING: COMPANY INTRODUCTION
+    # -----------------------------------------
+
+    if is_company_overview_question(query):
+
+        answer = """
+### What is Cipla?
+
+Cipla is a pharmaceutical company with more than
+eight decades of history in healthcare.
+
+**Key Information:**
+
+- **Industry:** Pharmaceutical and healthcare.
+- **History:** More than 80 years of caring for life.
+- **Products:** Its portfolio includes medicines
+  across different therapeutic areas.
+- **Respiratory Care:** Cipla provides information
+  and products related to asthma and inhalation therapy.
+- **Global Presence:** Its business activities include
+  international markets.
+
+Cipla's mission and healthcare activities focus on
+providing medicines and improving access to treatment.
+"""
+
+        sources = list(dict.fromkeys(
+            item["url"] for item in results[:3]
+        ))
+
+        answer += """
+
+**Medical Disclaimer:** This chatbot provides general
+information from the Cipla website dataset. It cannot
+diagnose diseases or recommend medicines or dosages.
+Please consult a qualified healthcare professional.
+"""
+
+        return answer, sources
+
+    # -----------------------------------------
+    # EXTRACT RELEVANT SENTENCES
+    # -----------------------------------------
 
     sentence_records = []
 
-    # Extract sentences from retrieved documents
     for result in results:
 
-        sentences = split_sentences(
-            result["text"]
-        )
+        sentences = split_sentences(result["text"])
 
         for sentence in sentences:
+
+            if is_noisy_sentence(sentence):
+                continue
 
             sentence_records.append({
                 "sentence": sentence,
@@ -423,72 +526,65 @@ def generate_answer(
     if not sentence_records:
 
         return (
-            "I found related pages but could not "
-            "extract a clear answer. Please rephrase "
-            "your question."
+            "I found related information but could not "
+            "extract a clear answer from the dataset."
         ), []
+
+    # -----------------------------------------
+    # RANK SENTENCES
+    # -----------------------------------------
 
     sentences = [
         item["sentence"]
         for item in sentence_records
     ]
 
-    # IMPORTANT:
-    # Rank sentences using the original question,
-    # not the expanded query.
+    query_vector = vectorizer.transform([query])
 
-    query_vector = vectorizer.transform(
-        [clean_query(query)]
-    )
+    sentence_matrix = vectorizer.transform(sentences)
 
-    sentence_matrix = vectorizer.transform(
-        sentences
-    )
-
-    sentence_scores = cosine_similarity(
+    scores = cosine_similarity(
         query_vector,
         sentence_matrix
     ).flatten()
 
-    ranked_sentences = []
+    ranked = []
 
-    for index, score in enumerate(sentence_scores):
+    for i, score in enumerate(scores):
 
-        document_score = sentence_records[index][
-            "document_score"
-        ]
+        document_score = sentence_records[i]["document_score"]
 
-        combined_score = (
-            0.80 * float(score)
-            + 0.20 * document_score
+        final_score = (
+            0.75 * float(score)
+            + 0.25 * document_score
         )
 
-        ranked_sentences.append((
-            combined_score,
-            sentence_records[index]
-        ))
+        if score >= 0.03:
 
-    ranked_sentences.sort(
-        key=lambda x: x[0],
-        reverse=True
-    )
+            ranked.append((
+                final_score,
+                sentence_records[i]
+            ))
 
-    # Select useful and unique sentences
+    ranked.sort(key=lambda x: x[0], reverse=True)
+
+    # -----------------------------------------
+    # REMOVE DUPLICATES
+    # -----------------------------------------
+
     selected = []
-    seen = set()
     sources = []
+    seen = set()
 
-    for score, item in ranked_sentences:
+    for score, item in ranked:
 
         sentence = item["sentence"]
 
-        normalized = sentence.lower()
+        normalized = re.sub(
+            r"\W+", "", sentence.lower()
+        )
 
         if normalized in seen:
-            continue
-
-        # Ignore weak sentence matches
-        if score < 0.04:
             continue
 
         seen.add(normalized)
@@ -498,70 +594,47 @@ def generate_answer(
         if item["url"] not in sources:
             sources.append(item["url"])
 
-        if len(selected) >= 5:
+        if len(selected) == 3:
             break
 
     if not selected:
 
         return (
-            "I could not identify a sufficiently "
-            "relevant answer in the available data.",
-            []
-        )
+            "I could not find a sufficiently relevant "
+            "answer in the Cipla dataset."
+        ), []
 
-    # Create readable answer
-    if role == "Patient":
+    # -----------------------------------------
+    # FORMAT FINAL RESPONSE
+    # -----------------------------------------
 
-        heading = (
-            "### Simple Explanation"
-        )
-
-        max_chars = 1300
-
-    else:
-
-        heading = (
-            "### Detailed Information"
-        )
-
-        max_chars = 1800
+    heading = (
+        "### Simple Explanation"
+        if role == "Patient"
+        else "### Detailed Information"
+    )
 
     answer = heading + "\n\n"
 
     for sentence in selected:
 
-        if role == "Patient" and len(sentence) > 350:
-
-            sentence = (
-                sentence[:347].rsplit(" ", 1)[0]
-                + "..."
-            )
-
         answer += "- " + sentence + "\n\n"
 
-        if len(answer) >= max_chars:
-            break
-
-    # Medical safety message
     if role == "Patient":
 
         answer += (
-            "\n**Medical Disclaimer:** "
-            "This chatbot provides general information "
-            "from the Cipla website dataset. It cannot "
-            "diagnose a disease or recommend medicines "
-            "or dosages. Please consult a qualified "
-            "healthcare professional."
+            "**Medical Disclaimer:** This chatbot provides "
+            "general information from the Cipla website dataset. "
+            "It cannot diagnose diseases or recommend medicines "
+            "or dosages. Please consult a qualified healthcare "
+            "professional."
         )
 
     else:
 
         answer += (
-            "\n**Clinical Note:** "
-            "This response contains retrieved website "
-            "information and is not a clinical decision. "
-            "Verify medical information against current "
-            "approved prescribing information."
+            "**Clinical Note:** Verify medical information "
+            "against current approved prescribing information."
         )
 
     return answer, sources
