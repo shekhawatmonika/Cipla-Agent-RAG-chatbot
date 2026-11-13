@@ -1,6 +1,7 @@
 streamlit
 scikit-learn
 requests
-beautifulsoup4
-lxml
-python-dotenv
+selinium
+fastapi
+uvicorn
+pydantic

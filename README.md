@@ -2,8 +2,6 @@
 
 A **Multi-Agent RAG (Agentic AI)** chatbot that answers questions about **Cipla** using ONLY Cipla's official website data.
 
-> Live Project:https://cipla-rag-chatbot.streamlit.app
-
 No Hallucination. Every answer comes with **Sources + Similarity Score**.
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
@@ -16,13 +14,13 @@ No Hallucination. Every answer comes with **Sources + Similarity Score**.
 
 🤖 Agentic AI - Multi-Agent System
 
-This is not a chatbot, This is **Agentic RAG** . In this 3 Agent will work together:
+Ye sirf ek chatbot nahi hai, ye **Agentic RAG** hai. Isme 3 Agents ek ke baad ek kaam karte hai:
 
 | Agent | Kaam | Function |
 | :--- | :--- | :--- |
-| **1. Planner Agent** | Understand user Questions / rewrite answers | `rewrite_query()` |
-| **2. Retriever Agent** | TF-IDF + use Cosine Similarity for beat answer | `retrieve_documents()` |
-| **3. Critic Agent** | Irrelevant / remove irrelevent sentences| `select_relevant_sentences()` |
+| **1. Planner Agent** | User ke question ko samajh ke saaf / rewrite karta hai | `rewrite_query()` |
+| **2. Retriever Agent** | TF-IDF + Cosine Similarity se sabse best pages dhundhta hai | `retrieve_documents()` |
+| **3. Critic Agent** | Irrelevant / gande sentences ko reject karke sirf sahi sentences rakhta hai | `select_relevant_sentences()` |
 
 User Question
     ↓
@@ -34,43 +32,34 @@ User Question
     ↓
 [Answer Agent] -> Final Bulleted Answer
 
->This is not single step Rag, This is **Multi-Agent Pipeline** .
+> Ye single-step RAG nahi hai, ye **Multi-Agent Pipeline** hai. Har Agent ka alag kaam hai, aur final answer teeno ke decision se banta hai.
 
 ---
 
 ✨ Features
 
 - **Patient / Doctor Mode** - Doctor ko 8 sentences, Patient ko 5 simple sentences
-- **Suggested Questions** - Not need to type demo questions
-- **View Sources** - Below every answer Cipla  official link
-- **Search Details** - Show similarity score for proof
+- **Suggested Questions** - Demo me type karne ki zaroorat nahi
+- **View Sources** - Har answer ke neeche Cipla ka official link
+- **Search Details** - Similarity score dikhta hai, teacher ko proof milta hai
 - **Dual Interface** - Streamlit UI + FastAPI Backend
-- **Docker Ready** - Will not run in one command
+- **Docker Ready** - Ek command me kahi bhi chalega
 
 📁 Project Structure
 
 CIPLA RAG CHATBOT/
 ├── http://app.py              # Main Streamlit App + RAG Pipeline (3 Agents)
-
 ├── http://api.py              # FastAPI Backend
-
 ├── scraper_js.py       # Cipla website se data scrape karta hai
-
 ├── clean_cipla.py      # Scraped data ko clean karta hai
-
 ├── data/
 │   ├── cipla_clean.json      # Cleaned data (Final)
 │   └── cipla_full_site.json   # Raw scraped data
-
 ├── Dockerfile
-
 ├── http://docker-compose.yml
-
 ├── http://requirements.txt
-
 ├── .gitignore
 └── http://README.md
-
 
 🚀 Run Locally
 
@@ -84,7 +73,7 @@ Open: `http://localhost:8501`
 uvicorn api:app --reload
 Open Swagger Docs: `http://127.0.0.1:8000/docs`
 
-3. Docker (All in one)
+3. Docker (Sab kuch ek saath)
 docker-compose up --build
 - Streamlit: `http://localhost:8501`
 - API: `http://localhost:8000/docs`
